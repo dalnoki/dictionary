@@ -3,11 +3,10 @@
         <div>
             <input type="file" accept="image/*" @change="onImageSelect">
             <button @click="imageUpload">Upload</button>
-            <button @click="imageLoadFromLocalS">Load image</button>
             <button @click="removeImage">Remove image</button>
         </div>
         <div id="preview">
-          <img v-show="url" :src="url" id="uploaded-img" /> 
+          <img v-show="url" :src="url" id="uploaded-img" />
         </div>
     </div>
 </template>
@@ -21,41 +20,46 @@ export default {
             imageName : null
         }
     },
+    
+    mounted () {
+        if (localStorage.selectedImage) {
+            let canvas = document.createElement("canvas");
+            let image = new Image();
+            image.src = localStorage.selectedImage;
+            image.id = "loaded";
+            let preview = document.getElementById("preview")
+            preview.appendChild(image);
+        }
+        
+    },
+    
     methods : {
         convertImgToCanvas() {
-            console.log()
             let image = document.getElementById("uploaded-img")
-         
-            let canvas = document.createElement("canvas")
-
-            canvas.width = image.width;
-            canvas.height = image.height;
-            
+            let canvas = document.createElement("canvas");
+            canvas.width = image.width
+            canvas.height = image.height
             let ctx = canvas.getContext("2d");
-            ctx.drawImage(image, 0, 0);
-
-            return canvas.toDataURL()
-           
+            ctx.drawImage(image, 0, 0, image.width, image.height);
+            console.log(canvas.toDataURL)
+            return canvas.toDataURL() 
         },   
 
         imageUpload(){
             let converted = this.convertImgToCanvas()
-            console.log(converted);
+            let img = document.getElementById('uploaded-img'); 
+
+            let width = img.clientWidth;
+            let height = img.clientHeight;
               // Save image into localStorage
             try {
-                localStorage.setItem( this.imageName, converted);
+                localStorage.setItem( "selectedImage", converted);
+                localStorage.setItem("imgWidth", width);
+                localStorage.setItem("imgHeight", height);
             }
             catch (e) {
                 console.log("Storage failed: " + e);
             }
-
-            let preview = document.getElementById("uploaded-img")
-            let dataURL = localStorage.getItem(this.imageName);
-            preview.setAttribute('src', dataURL)
-        
-          
-
-
         },
 
         onImageSelect(event){
@@ -63,21 +67,12 @@ export default {
             this.url = URL.createObjectURL(file);
             this.image = file;
             this.imageName = file.name;
-            console.log(this.image)
-        },
-
-        imageLoadFromLocalS() {
-            let dataURL = localStorage.getItem(this.imageName);
-            let img = new Image;
-            img.src = dataURL;
-            img.onload = function () {
-                ctx.drawImage(img, 0, 0);
-            };
-            document.getElementById("uploaded-img").appendChild(img);
+            let loaded = document.getElementById("loaded");
+            loaded.style.display = "none";
         },
 
         removeImage() {
-            localStorage.removeItem(this.imageName);
+            localStorage.removeItem(this.selectedImage);
             this.image = null;
             this.url = null;
         }
