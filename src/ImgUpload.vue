@@ -6,7 +6,9 @@
             <button @click="removeImage">Remove image</button>
         </div>
         <div id="preview">
+        
           <img v-show="url" :src="url" id="uploaded-img" />
+          <img v-if="localStorage && localStorage.selectedImage" :src="localStorage.selectedImage">
         </div>
     </div>
 </template>
@@ -16,23 +18,10 @@ export default {
     data : function() {
         return {
             url: null,
-            image : null,
-            imageName : null
+            localStorage : window.localStorage
         }
     },
-    
-    mounted () {
-        if (localStorage.selectedImage) {
-            let canvas = document.createElement("canvas");
-            let image = new Image();
-            image.src = localStorage.selectedImage;
-            image.id = "loaded";
-            let preview = document.getElementById("preview")
-            preview.appendChild(image);
-        }
         
-    },
-    
     methods : {
         convertImgToCanvas() {
             let image = document.getElementById("uploaded-img")
@@ -42,13 +31,11 @@ export default {
             let ctx = canvas.getContext("2d");
             ctx.drawImage(image, 0, 0, image.width, image.height);
             console.log(canvas.toDataURL)
-            return canvas.toDataURL() 
+            return canvas.toDataURL("image/jpg", 1) 
         },   
-
         imageUpload(){
             let converted = this.convertImgToCanvas()
             let img = document.getElementById('uploaded-img'); 
-
             let width = img.clientWidth;
             let height = img.clientHeight;
               // Save image into localStorage
@@ -61,19 +48,12 @@ export default {
                 console.log("Storage failed: " + e);
             }
         },
-
         onImageSelect(event){
             let file = event.target.files[0] || event.dataTransfer.files[0]
             this.url = URL.createObjectURL(file);
-            this.image = file;
-            this.imageName = file.name;
-            let loaded = document.getElementById("loaded");
-            loaded.style.display = "none";
         },
-
         removeImage() {
             localStorage.removeItem(this.selectedImage);
-            this.image = null;
             this.url = null;
         }
     }
@@ -86,7 +66,6 @@ export default {
     justify-content: center;
     align-items: center;
 }
-
 #preview img {
     max-width: 100%;
     max-height: 400px;

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <cards-body></cards-body>
+    <img-upload></img-upload>
   </div>
 
 </template>
