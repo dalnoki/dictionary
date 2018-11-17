@@ -1,8 +1,13 @@
 <template>
-    <div>
-        <div v-if="!url">
-            <input type="file" accept="image/*" @change="onImageSelect"> 
-        </div>
+    <div class="upload-wrapper"
+    @dragover.prevent="enter"
+    @dragenter.prevent="enter"
+    @dragleave.prevent="leave"
+    @dragend.prevent="leave"
+    @drop.prevent="onImageSelect"
+    v-bind:class="{ 'dragged' : isDraggedOver }">
+        <input type="file" accept="image/*" @change="onImageSelect" class="file-input" id="file">
+        <label for="file" @change="onImageSelect">Choose a file</label>
         <button @click="imageUpload">Upload</button>
         <button @click="removeImage">Remove image</button>
         <div id="preview">
@@ -16,12 +21,16 @@
 export default {
     data : function() {
         return {
-            url: null,
+            dragAndDropCapable: false,
+            id : this._uid,
             localStorage : window.localStorage,
-            id : this._uid
+            url: null,
+            isDraggedOver: false
         }
     },
-        
+    mounted() {
+        this.checkDragAndDropCapable();
+    }, 
     methods : {
         convertImgToCanvas() {
             let image = document.getElementById("uploaded-img"+this.id)
@@ -33,7 +42,18 @@ export default {
             console.log(canvas.toDataURL)
             return canvas.toDataURL("image/jpg", 1) 
         },   
-        imageUpload(){
+        checkDragAndDropCapable() {
+            let div = document.createElement('div');
+            this.dragAndDropCapable = ( 'draggable' in div ) || ( 'ondragstart' in div && 'ondrop' in div );
+            console.log(this.dragAndDropCapable)
+        },
+        enter () {
+            this.isDraggedOver = true;
+        },
+        leave () {
+            this.isDraggedOver = false;
+        },
+        imageUpload() {
             let converted = this.convertImgToCanvas()
             let img = document.getElementById('uploaded-img'+this.id); 
             let width = img.clientWidth;
@@ -49,8 +69,16 @@ export default {
             }
         },
         onImageSelect(event){
-            let file = event.target.files[0] || event.dataTransfer.files[0]
+            console.log(event)
+            let file = "";
+            if (event.target.files) {
+                file = event.target.files[0]
+            }
+            else {
+                file = event.dataTransfer.files[0]
+            }
             this.url = URL.createObjectURL(file);
+            this.leave();
         },
         removeImage() {
             localStorage.removeItem(`selectedImage${this.id}`);
@@ -63,6 +91,20 @@ export default {
 </script>
 
 <style>
+label {
+  border: 2px solid gray;
+  color: gray;
+  cursor: pointer;
+  background-color: white;
+  display: inline-block;
+  font-size: 1.25em;
+  font-weight: 700;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
 #preview {
     display: flex;
     justify-content: center;
@@ -72,4 +114,36 @@ export default {
     max-width: 100%;
     max-height: 400px;
 }
+
+.dragged {
+    border: 2px dotted black !important;
+}
+
+.file-input {
+    width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	z-index: -1;
+}
+
+.file-input:focus + label {
+    outline: 1px dotted #000;
+	outline: -webkit-focus-ring-color auto 5px;
+}
+
+.file-input:focus + label,
+.file-input + label:hover {
+    background-color: gray;
+    color: white;
+}
+
+.upload-wrapper {
+    border :  2px solid gray;
+    border-radius: 10px;
+    margin: 10px;
+
+}
+
 </style>
